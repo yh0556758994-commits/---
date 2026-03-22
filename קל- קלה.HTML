@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProBank v9.3 - Total Balance</title>
+    <title>ProBank v9.4 - Smart Archive</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -18,7 +18,7 @@
         .nav-btn { background: rgba(255,255,255,0.05); border: none; color: white; padding: 12px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; text-align: right; font-size: 0.95rem; transition: 0.3s; width: 100%; }
         .nav-btn:hover { background: var(--accent); }
         .archive-list { margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; flex-grow: 1; overflow-y: auto; }
-        .archive-item { font-size: 0.85rem; padding: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; margin-bottom: 5px; background: rgba(255,255,255,0.03); }
+        .archive-item { font-size: 0.85rem; padding: 8px; border-radius: 8px; display: flex; justify-content: space-between; margin-bottom: 5px; background: rgba(255,255,255,0.03); }
         
         .main { flex: 1; overflow-y: auto; padding: 30px; display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
         .stat-card { background: white; border-radius: 20px; padding: 20px; box-shadow: var(--card-shadow); }
@@ -39,8 +39,7 @@
         
         input { width: 100%; padding: 10px; margin: 5px 0 15px 0; border-radius: 10px; border: 2px solid #e2e8f0; font-family: inherit; box-sizing: border-box; }
         .btn-submit { background: var(--accent); color: white; border: none; padding: 14px; width: 100%; border-radius: 12px; font-weight: 800; cursor: pointer; }
-        .alert-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--danger); color: white; padding: 15px 30px; border-radius: 12px; font-weight: 800; display: none; z-index: 2000; box-shadow: 0 10px 20px rgba(0,0,0,0.2); animation: slideDown 0.5s; }
-        @keyframes slideDown { from { top: -100px; } to { top: 20px; } }
+        .alert-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--danger); color: white; padding: 15px 30px; border-radius: 12px; font-weight: 800; display: none; z-index: 2000; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -68,7 +67,7 @@
                 </div>
                 <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
                     <span id="goalText">יעד: ₪0</span>
-                    <span id="usedText">הוצאה: ₪0</span>
+                    <span id="usedText">הוצאה חודשית: ₪0</span>
                 </div>
             </div>
             <div class="stat-card">
@@ -85,8 +84,8 @@
                 <div style="color: var(--accent); border-right: 2px solid #eee; padding-right: 10px;"><small>יתרה חודשית</small><div id="sumTotal" style="font-weight:800;">₪0</div></div>
             </div>
             <div class="history-card">
-                <h3>פעולות אחרונות</h3>
-                <input type="text" id="searchInput" placeholder="חיפוש מהיר..." oninput="render()" style="margin-bottom: 10px;">
+                <h3>פעולות חודש נוכחי</h3>
+                <input type="text" id="searchInput" placeholder="חיפוש..." oninput="render()" style="margin-bottom: 10px;">
                 <div id="logs"></div>
             </div>
         </div>
@@ -97,7 +96,6 @@
     <div class="modal-overlay" id="overlay">
         <div class="modal">
             <h2 id="modalTitle">פעולה חדשה</h2>
-            
             <div id="actionFields">
                 <div class="type-selector">
                     <button id="btnExp" class="type-btn active-exp" onclick="setType('expense')">הוצאה</button>
@@ -108,60 +106,69 @@
                 <input type="text" id="subCat" placeholder="תת קטגוריה">
                 <input type="number" id="amt" placeholder="* סכום">
                 <input type="date" id="dt">
-                <input type="file" id="imgInput" accept="image/*" onchange="previewImage(this)">
                 <div id="maaserBox" style="display:none; background:#f0fdf4; padding:10px; border-radius:10px; margin-bottom:15px;">
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                        <input type="checkbox" id="doM" checked style="width:auto; margin:0;"> הפרשת מעשר אוטומטית (10%)
-                    </label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="doM" checked> מעשר אוטומטי (10%)</label>
                 </div>
             </div>
-            
-            <div id="goalFields" style="display:none">
-                <label>הגדרת יעד הוצאות למעקב חודשי:</label>
-                <input type="number" id="goalInput">
-            </div>
-
-            <div id="compareFields" style="display:none">
-                <div id="compareContent"></div>
-            </div>
-
-            <button class="btn-submit" onclick="finalSubmit()">אישור ושמירה</button>
-            <button style="background:none; border:none; color:#94a3b8; width:100%; cursor:pointer; margin-top:10px;" onclick="closeModal()">ביטול</button>
+            <div id="goalFields" style="display:none"><input type="number" id="goalInput" placeholder="₪ יעד חודשי"></div>
+            <div id="compareFields" style="display:none"><div id="compareContent"></div></div>
+            <button class="btn-submit" onclick="finalSubmit()">אישור</button>
+            <button style="background:none; border:none; color:#94a3b8; width:100%; cursor:pointer; margin-top:10px;" onclick="closeModal()">סגור</button>
         </div>
     </div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem("pro_v92_db")) || [];
-        let archives = JSON.parse(localStorage.getItem("pro_v92_archives")) || {};
-        let myGoal = localStorage.getItem("pro_v92_goal") || 5000;
+        let db = JSON.parse(localStorage.getItem("pro_v94_db")) || [];
+        let archives = JSON.parse(localStorage.getItem("pro_v94_archives")) || {};
+        let myGoal = localStorage.getItem("pro_v94_goal") || 5000;
         let currentType = 'expense';
         let activeMode = 'action';
-        let currentImg = "";
 
         const ctx = document.getElementById('lineChart').getContext('2d');
         let chart = new Chart(ctx, { 
             type: 'line', 
             data: { labels: [], datasets: [{ label: 'יתרה חודשית', data: [], borderColor: '#2563eb', tension: 0.3, fill: true, backgroundColor: 'rgba(37, 99, 235, 0.05)' }] },
-            options: { scales: { y: { beginAtZero: true } }, responsive: true }
+            options: { scales: { y: { beginAtZero: true } } }
         });
 
-        function checkAutoArchive() {
-            if (db.length === 0) return;
+        // פונקציית ארכיון חכמה - מפרידה חודשים ישנים
+        function smartArchiveCheck() {
             const now = new Date();
-            const lastDate = new Date(db[db.length - 1].d);
-            if (now.getMonth() !== lastDate.getMonth() || now.getFullYear() !== lastDate.getFullYear()) {
-                const monthLabel = `${lastDate.getMonth() + 1}/${lastDate.getFullYear()}`;
-                archives[monthLabel] = [...db];
-                db = [];
-                localStorage.setItem("pro_v92_archives", JSON.stringify(archives));
-                localStorage.setItem("pro_v92_db", JSON.stringify(db));
-                alert(`חודש חדש התחיל! נתוני ${monthLabel} הועברו לארכיון.`);
+            const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
+            let hasChanged = false;
+
+            const oldItems = db.filter(item => {
+                const itemDate = new Date(item.d);
+                const itemMonthKey = `${itemDate.getMonth() + 1}/${itemDate.getFullYear()}`;
+                return itemMonthKey !== currentMonthKey;
+            });
+
+            if (oldItems.length > 0) {
+                oldItems.forEach(item => {
+                    const itemDate = new Date(item.d);
+                    const monthKey = `${itemDate.getMonth() + 1}/${itemDate.getFullYear()}`;
+                    if (!archives[monthKey]) archives[monthKey] = [];
+                    archives[monthKey].push(item);
+                });
+
+                db = db.filter(item => {
+                    const itemDate = new Date(item.d);
+                    const itemMonthKey = `${itemDate.getMonth() + 1}/${itemDate.getFullYear()}`;
+                    return itemMonthKey === currentMonthKey;
+                });
+                hasChanged = true;
+            }
+
+            if (hasChanged) {
+                localStorage.setItem("pro_v94_archives", JSON.stringify(archives));
+                localStorage.setItem("pro_v94_db", JSON.stringify(db));
+                renderArchiveSidebar();
             }
         }
 
         function setType(t) {
             currentType = t;
-            resetFields(); // איפוס שדות במעבר בין סוגים
+            resetFields();
             document.getElementById('btnExp').classList.toggle('active-exp', t==='expense');
             document.getElementById('btnInc').classList.toggle('active-inc', t==='income');
             document.getElementById('maaserBox').style.display = t==='income'?'block':'none';
@@ -179,11 +186,7 @@
             document.getElementById('actionFields').style.display = mode==='action'?'block':'none';
             document.getElementById('goalFields').style.display = mode==='goal'?'block':'none';
             document.getElementById('compareFields').style.display = mode==='compare'?'block':'none';
-            if(mode==='action') { 
-                resetFields();
-                document.getElementById('dt').valueAsDate = new Date(); 
-                updateSugs(); 
-            }
+            if(mode==='action') { resetFields(); document.getElementById('dt').valueAsDate = new Date(); }
             if(mode==='compare') renderCompare();
         }
 
@@ -191,42 +194,35 @@
             document.getElementById('note').value = "";
             document.getElementById('amt').value = "";
             document.getElementById('subCat').value = "";
-            document.getElementById('imgInput').value = "";
-            currentImg = "";
         }
 
         function closeModal() { document.getElementById('overlay').style.display = 'none'; resetFields(); }
 
-        function previewImage(input) {
-            const reader = new FileReader();
-            reader.onload = (e) => currentImg = e.target.result;
-            if(input.files[0]) reader.readAsDataURL(input.files[0]);
-        }
-
         function finalSubmit() {
             if(activeMode === 'action') {
                 const a = parseFloat(document.getElementById('amt').value), n = document.getElementById('note').value;
-                if(!a || !n) return alert("חובה למלא תיאור וסכום");
-                db.push({ id: Date.now(), a, n, sc: document.getElementById('subCat').value, t: currentType, d: document.getElementById('dt').value, img: currentImg });
+                if(!a || !n) return alert("שדות חובה!");
+                db.push({ id: Date.now(), a, n, sc: document.getElementById('subCat').value, t: currentType, d: document.getElementById('dt').value });
                 if(currentType==='income' && document.getElementById('doM').checked) {
                     db.push({ id: Date.now()+1, a: a*0.1, n: "מעשר", t: 'expense', m: true, d: document.getElementById('dt').value });
                 }
             } else if(activeMode === 'goal') {
                 myGoal = document.getElementById('goalInput').value;
-                localStorage.setItem("pro_v92_goal", myGoal);
+                localStorage.setItem("pro_v94_goal", myGoal);
             }
-            localStorage.setItem("pro_v92_db", JSON.stringify(db));
+            localStorage.setItem("pro_v94_db", JSON.stringify(db));
+            smartArchiveCheck(); // בדיקה מיד לאחר שמירה
             closeModal(); render();
         }
 
         function renderArchiveSidebar() {
             const container = document.getElementById('archiveList');
             container.innerHTML = '<small style="opacity: 0.6;">ארכיון חודשים:</small>';
-            Object.keys(archives).sort().reverse().forEach(key => {
-                const div = document.createElement('div');
-                div.className = 'archive-item';
-                div.innerHTML = `<span>📂 ${key}</span> <span onclick="deleteArchive('${key}', event)" style="cursor:pointer">🗑️</span>`;
-                container.appendChild(div);
+            Object.keys(archives).sort((a,b) => {
+                const [m1,y1] = a.split('/'), [m2,y2] = b.split('/');
+                return new Date(y2, m2-1) - new Date(y1, m1-1);
+            }).forEach(key => {
+                container.innerHTML += `<div class="archive-item"><span>📂 ${key}</span> <span onclick="deleteArchive('${key}', event)" style="cursor:pointer">🗑️</span></div>`;
             });
         }
 
@@ -234,9 +230,8 @@
             e.stopPropagation();
             if(confirm(`למחוק את ארכיון ${key}?`)) {
                 delete archives[key];
-                localStorage.setItem("pro_v92_archives", JSON.stringify(archives));
-                renderArchiveSidebar();
-                render(); // רינדור מחדש כדי לעדכן יתרה כללית
+                localStorage.setItem("pro_v94_archives", JSON.stringify(archives));
+                renderArchiveSidebar(); render();
             }
         }
 
@@ -245,7 +240,7 @@
             Object.keys(archives).forEach(m => {
                 const inc = archives[m].filter(i=>i.t==='income').reduce((s,i)=>s+i.a,0);
                 const exp = archives[m].filter(i=>i.t==='expense').reduce((s,i)=>s+i.a,0);
-                html += `<tr style="border-bottom:1px solid #eee; height:45px;"><td>${m}</td><td style="color:var(--success)">₪${inc.toLocaleString()}</td><td style="color:var(--danger)">₪${exp.toLocaleString()}</td><td style="font-weight:bold">₪${(inc-exp).toLocaleString()}</td></tr>`;
+                html += `<tr style="border-bottom:1px solid #eee; height:40px;"><td>${m}</td><td style="color:var(--success)">₪${inc}</td><td style="color:var(--danger)">₪${exp}</td><td>₪${inc-exp}</td></tr>`;
             });
             document.getElementById('compareContent').innerHTML = html + '</table>';
         }
@@ -254,48 +249,27 @@
             const logs = document.getElementById('logs'), search = document.getElementById('searchInput').value.toLowerCase();
             logs.innerHTML = '';
             db.sort((a,b) => new Date(a.d) - new Date(b.d));
-            
-            let sIn=0, sOut=0, sMa=0, balCurrent=0, lbls=['0'], pts=[0];
+            let sIn=0, sOut=0, sMa=0, balCur=0, lbls=['0'], pts=[0];
 
-            // חישוב חודש נוכחי
             db.forEach(i => {
                 const isInc = i.t === 'income';
                 if(isInc) sIn += i.a; else { sOut += i.a; if(i.m) sMa += i.a; }
-                balCurrent += (isInc ? i.a : -i.a);
-                lbls.push(i.d.split('-')[2]); pts.push(balCurrent);
+                balCur += (isInc ? i.a : -i.a);
+                lbls.push(i.d.split('-')[2]); pts.push(balCur);
 
-                if(!search || i.n.toLowerCase().includes(search) || (i.sc && i.sc.toLowerCase().includes(search))) {
-                    logs.innerHTML = `
-                        <div class="t-item">
-                            <div><b>${i.n}</b> ${i.sc ? `<small style="background:#f1f5f9; padding:2px 5px; border-radius:4px">${i.sc}</small>` : ''}<div style="font-size:0.7rem; color:#94a3b8">${i.d}</div></div>
-                            <div style="text-align:left">
-                                <div style="color:${isInc?'var(--success)':'var(--danger)'}; font-weight:800">
-                                    ${i.img ? `<span onclick="window.open().document.write('<img src=${i.img} style=max-width:100%>')" style="cursor:pointer">🖼️</span>` : ''}
-                                    ${isInc?'+':'-'}₪${i.a.toLocaleString()}
-                                </div>
-                                <span onclick="del(${i.id})" style="cursor:pointer; opacity:0.2; margin-right:10px;">🗑️</span>
-                            </div>
-                        </div>
-                    ` + logs.innerHTML;
+                if(!search || i.n.toLowerCase().includes(search)) {
+                    logs.innerHTML = `<div class="t-item"><div><b>${i.n}</b><div style="font-size:0.7rem; color:#94a3b8">${i.d}</div></div><div style="text-align:left"><div style="color:${isInc?'var(--success)':'var(--danger)'}; font-weight:800">${isInc?'+':'-'}₪${i.a.toLocaleString()}</div><span onclick="del(${i.id})" style="cursor:pointer; opacity:0.2">🗑️</span></div></div>` + logs.innerHTML;
                 }
             });
 
-            // חישוב יתרה כללית (חודש נוכחי + כל הארכיונים)
-            let totalArchiveBal = 0;
-            Object.values(archives).forEach(monthData => {
-                monthData.forEach(item => {
-                    totalArchiveBal += (item.t === 'income' ? item.a : -item.a);
-                });
-            });
-            const globalBalance = totalArchiveBal + balCurrent;
+            let totalGlobal = balCur;
+            Object.values(archives).forEach(m => m.forEach(i => totalGlobal += (i.t==='income'?i.a:-i.a)));
 
             document.getElementById('sumIn').innerText = `₪${sIn.toLocaleString()}`;
             document.getElementById('sumOut').innerText = `₪${sOut.toLocaleString()}`;
             document.getElementById('sumMa').innerText = `₪${sMa.toLocaleString()}`;
-            document.getElementById('sumTotal').innerText = `₪${balCurrent.toLocaleString()}`;
-            
-            // עדכון כפתור יתרה כללית
-            document.getElementById('floatBal').innerText = `יתרה כללית: ₪${globalBalance.toLocaleString()}`;
+            document.getElementById('sumTotal').innerText = `₪${balCur.toLocaleString()}`;
+            document.getElementById('floatBal').innerText = `יתרה כללית: ₪${totalGlobal.toLocaleString()}`;
 
             const perc = (sOut / myGoal) * 100;
             const fill = document.getElementById('progressFill');
@@ -304,22 +278,21 @@
             document.getElementById('alertBox').style.display = (perc >= 80) ? 'block' : 'none';
             
             document.getElementById('goalText').innerText = `יעד: ₪${parseFloat(myGoal).toLocaleString()}`;
-            document.getElementById('usedText').innerText = `הוצאה: ₪${sOut.toLocaleString()}`;
-
+            document.getElementById('usedText').innerText = `הוצאה חודשית: ₪${sOut.toLocaleString()}`;
             chart.data.labels = lbls; chart.data.datasets[0].data = pts; chart.update();
         }
 
-        function del(id) { if(confirm("למחוק?")) { db = db.filter(i=>i.id!==id); localStorage.setItem("pro_v92_db", JSON.stringify(db)); render(); } }
+        function del(id) { if(confirm("למחוק?")) { db = db.filter(i=>i.id!==id); localStorage.setItem("pro_v94_db", JSON.stringify(db)); render(); } }
 
         function exportToExcel() {
-            let csv = "\uFEFFתאריך,תיאור,קטגוריה,סוג,סכום\n";
-            db.forEach(i => csv += `${i.d},${i.n},${i.sc||""},${i.t==='income'?'הכנסה':'הוצאה'},${i.a}\n`);
+            let csv = "\uFEFFתאריך,תיאור,סוג,סכום\n";
+            db.forEach(i => csv += `${i.d},${i.n},${i.t},${i.a}\n`);
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob); link.download = `פרו_בנק_${new Date().toLocaleDateString()}.csv`; link.click();
+            link.href = URL.createObjectURL(blob); link.download = "דוח_פרובנק.csv"; link.click();
         }
 
-        checkAutoArchive();
+        smartArchiveCheck();
         renderArchiveSidebar();
         render();
     </script>
